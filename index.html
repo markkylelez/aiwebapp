@@ -148,12 +148,12 @@
     <div class="chat-sheet">
         <div class="handle"></div>
         <div class="messages-container" id="chat-box">
-            <div class="bubble ai">สวัสดีครับมาร์ค! วันนี้มีเรื่องอะไรไม่สบายใจไหม?</div>
+            <div class="bubble ai">สวัสดีครับ วันนี้มีเรื่องอะไรไม่สบายใจไหม?</div>
         </div>
         <div class="typing-text" id="typing-indicator" style="padding-left: 20px;">กำลังพิมพ์...</div>
         
         <div class="input-bar">
-            <input type="text" id="user-input" placeholder="พิมพ์คุยกับ AI..." autocomplete="off">
+            <input type="text" id="user-input" placeholder="พิมพ์คุยกับ น้องฮีลใจ..." autocomplete="off">
             <button onclick="sendMessage()">✈️</button>
         </div>
     </div>
@@ -204,7 +204,7 @@
             typingIndicator.style.display = 'none';
         }
 
-        // กด Enter เพื่อส่ง
+        
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
