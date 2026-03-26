@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>น้องฮีลใจ AI Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #B3E5FC 0%, #FFFFFF 100%);
+            --primary-green: #82B96D;
+            --light-green: #E9F1D7;
+            --ai-blue: #CDE1F9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Kanit', sans-serif; height: 100vh; overflow: hidden; background: var(--bg-gradient); }
+
+        /* --- AI Pulse Logo Area --- */
+        .ai-container {
+            height: 60vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            display: none; /* โชว์เฉพาะตอน Typing */
+        }
+
+        .pulse-ring.active {
+            display: block;
+            animation: pulse-anim 1.5s infinite ease-out;
+        }
+
+        @keyframes pulse-anim {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        .main-logo {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border-radius: 50%;
+            border: 8px solid white;
+            box-shadow: 0 0 30px rgba(179, 229, 252, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+            transition: transform 0.3s ease;
+        }
+
+        .main-logo.typing { animation: breathe 1.5s infinite ease-in-out; }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .main-logo img { width: 80%; height: 80%; border-radius: 50%; }
+
+        /* --- Chat Sheet Area --- */
+        .chat-sheet {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 45vh;
+            background: #FFF8EE;
+            border-radius: 40px 40px 0 0;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            transition: height 0.3s ease;
+            z-index: 10;
+        }
+
+        .handle {
+            width: 55px; height: 5px;
+            background: var(--ai-blue);
+            border-radius: 10px;
+            margin: 12px auto;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .bubble {
+            max-width: 80%;
+            padding: 10px 16px;
+            border-radius: 15px;
+            margin-bottom: 12px;
+            font-size: 16px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .bubble.ai { background: var(--light-green); align-self: flex-start; }
+        .bubble.me { background: var(--primary-green); color: white; align-self: flex-end; }
+
+        .typing-text { font-size: 14px; color: #999; margin-bottom: 10px; display: none; }
+
+        /* --- Input Bar --- */
+        .input-bar {
+            padding: 10px 20px 30px 20px;
+            display: flex;
+            gap: 10px;
+            background: #FFF8EE;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 15px;
+            border: 1px solid #eee;
+            outline: none;
+            font-family: 'Kanit', sans-serif;
+            font-size: 16px;
+        }
+
+        button {
+            background: none; border: none;
+            color: #333; font-size: 24px;
+            cursor: pointer; display: flex; align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ai-container">
+        <div id="ring" class="pulse-ring"></div>
+        <div id="logo" class="main-logo">
+            <img src="https://via.placeholder.com/150?text=AI" alt="Logo">
+        </div>
+    </div>
+
+    <div class="chat-sheet">
+        <div class="handle"></div>
+        <div class="messages-container" id="chat-box">
+            <div class="bubble ai">สวัสดีครับมาร์ค! วันนี้มีเรื่องอะไรไม่สบายใจไหม?</div>
+        </div>
+        <div class="typing-text" id="typing-indicator" style="padding-left: 20px;">กำลังพิมพ์...</div>
+        
+        <div class="input-bar">
+            <input type="text" id="user-input" placeholder="พิมพ์คุยกับ AI..." autocomplete="off">
+            <button onclick="sendMessage()">✈️</button>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const ring = document.getElementById('ring');
+        const logo = document.getElementById('logo');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // 1. เพิ่มข้อความเรา
+            appendBubble(text, 'me');
+            userInput.value = '';
+            
+            // 2. เริ่ม Effect AI คิด (เหมือนใน Flutter)
+            startAiEffect();
+
+            // 3. จำลอง AI ตอบกลับ (2 วินาที)
+            setTimeout(() => {
+                stopAiEffect();
+                appendBubble("เราอยู่ตรงนี้เสมอ มีอะไรบอกเราได้นะมาร์ค", 'ai');
+            }, 2000);
+        }
+
+        function appendBubble(text, side) {
+            const div = document.createElement('div');
+            div.className = `bubble ${side}`;
+            div.innerText = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function startAiEffect() {
+            ring.classList.add('active');
+            logo.classList.add('typing');
+            typingIndicator.style.display = 'block';
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function stopAiEffect() {
+            ring.classList.remove('active');
+            logo.classList.remove('typing');
+            typingIndicator.style.display = 'none';
+        }
+
+        // กด Enter เพื่อส่ง
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
