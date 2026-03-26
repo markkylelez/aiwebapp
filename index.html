@@ -279,19 +279,66 @@
         const logo = document.getElementById('logo');
         const typingContainer = document.getElementById('typing-container');
 
+        const chatList = [];
+
+        const logChat = [
+            { role: "user", content: "text1" },
+            { role: "assistant", content: "text2" },
+        ];
+
+        // ✅ render ทั้ง list
+        function renderChat() {
+            chatBox.innerHTML = ""; // เคลียร์ก่อน
+
+            chatList.forEach(msg => {
+                appendBubble(msg.text, msg.role);
+            });
+        }
+
         function sendMessage() {
             const text = userInput.value.trim();
             if (!text) return;
+
+            // ✅ push ลง list
+            chatList.push({ text: text, role: 'me' });
+            logChat.push({ role: 'user', content: text });
 
             appendBubble(text, 'me');
             userInput.value = '';
 
             startAiEffect();
 
-            setTimeout(() => {
+            setTimeout(async () => {
+                const aiText = await callAi(logChat);
                 stopAiEffect();
-                appendBubble("เรารับฟังอยู่เสมอนะ มีอะไรระบายออกมาได้เลย", 'ai');
+                console.log(aiText);
+
+                // ✅ push AI response ลง list
+                chatList.push({ text: aiText, role: 'ai' });
+                logChat.push({ role: 'assistant', content: aiText });
+
+                appendBubble(aiText, 'ai');
             }, 2000);
+        }
+
+
+        async function callAi(Logchat) {
+            try {
+                const response = await fetch('https://healjaiapi.onrender.com/api/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ logChat: Logchat })
+                });
+
+                const data = await response.json();
+                return data.reply;
+
+            } catch (error) {
+                console.error('API ERROR:', error);
+                return "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ";
+            }
         }
 
         function appendBubble(text, side) {
@@ -318,6 +365,9 @@
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
+
+        // ✅ โหลดครั้งแรก
+        renderChat();
     </script>
 </body>
 
