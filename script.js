@@ -1,128 +1,91 @@
-const MOCK = [
-    { id: 'RPT-1001', reporterId: 'USR-8821', reportedId: 'USR-0092', reportedName: 'ดาวดาว', feature: 'Chat', type: 'คำพูดเกลียดชัง', description: 'ส่งข้อความด่าทอด้วยถ้อยคำรุนแรงซ้ำๆ ในห้องแชทสาธารณะ ทำให้ผู้อื่นอึดอัด', status: 'pending', createdAt: Date.now() - 300000 },
-    { id: 'RPT-1002', reporterId: 'USR-4432', reportedId: 'USR-7712', reportedName: 'เมฆขาว', feature: 'Post', type: 'สแปม', description: 'โพสต์ขายของและส่งลิงก์แปลกๆ ลงในหน้าฟีดบ่อยเกินไป', status: 'pending', createdAt: Date.now() - 900000 },
-    { id: 'RPT-1003', reporterId: 'USR-1120', reportedId: 'USR-5541', reportedName: 'หมอกจาง', feature: 'Chat', type: 'เนื้อหาไม่เหมาะสม', description: 'แชร์รูปภาพที่ขัดต่อกฎระเบียบของชุมชนในแชทกลุ่ม', status: 'resolved', createdAt: Date.now() - 3600000 }
+// --- ข้อมูลแยกกล่องกันจริง ---
+let CHAT_REPORTS = [
+    { id: 'C101', reporter: 'สายฟ้า', reporterID: 'ID-223', reportedID: 'ID-882', type: 'คำพูดหยาบคาย', desc: 'ด่ากราดในห้องแชทสุ่ม', time: '14:20' }
 ];
 
-let reports = MOCK;
+let POST_REPORTS = [
+    { id: 'P505', reporter: 'ก้อนเมฆ', reporterID: 'ID-442', reportedID: 'ID-007', type: 'ขายของ/สแปม', desc: 'โพสต์ลิงก์เว็บพนันรัวๆ', time: '15:10' }
+];
 
-const STATUS_LABEL = { 
-    pending: ['รอตรวจสอบ', 'b-yellow'], 
-    resolved: ['จัดการแล้ว', 'b-green'], 
-    dismissed: ['ยกเลิก', 'b-gray'] 
-};
+let currentPage = 'all';
 
-function renderTable() {
-    const q = document.getElementById('q').value.toLowerCase();
-    const fFeat = document.getElementById('f-feature').value;
-    const fStat = document.getElementById('f-status').value;
+// ฟังก์ชันสลับหน้า
+function switchPage(page) {
+    currentPage = page;
+    document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`btn-${page}`).classList.add('active');
+    document.getElementById('title').innerText = "รายงาน: " + page;
+    updateTable();
+}
 
-    const filtered = reports.filter(r => {
-        return (r.id.toLowerCase().includes(q))
-            && (!fFeat || r.feature === fFeat)
-            && (!fStat || r.status === fStat);
-    });
-
-    document.getElementById('row-count').textContent = filtered.length + ' รายการ';
-    const tbody = document.getElementById('tbody');
+// ฟังก์ชันวาดตาราง
+function updateTable() {
+    const tbody = document.getElementById('table-body');
+    let list = [];
     
-    tbody.innerHTML = filtered.map(r => {
-        const date = new Date(r.createdAt).toLocaleDateString('th-TH');
-        const time = new Date(r.createdAt).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-        
-        return `
+    if (currentPage === 'Chat') list = CHAT_REPORTS;
+    else if (currentPage === 'Post') list = POST_REPORTS;
+    else list = [...CHAT_REPORTS, ...POST_REPORTS];
+
+    tbody.innerHTML = list.map(item => `
         <tr>
-            <td>
-                <div style="font-weight:500">${date}</div>
-                <div style="font-size:11px; color:var(--muted); font-family:var(--mono)">${time} น.</div>
-            </td>
-            <td><span class="badge ${r.feature === 'Chat' ? 'b-blue' : 'b-purple'}">${r.feature}</span></td>
-            <td><span class="badge b-red">${r.type}</span></td>
-            <td style="text-align: right;">
-                <button class="btn" style="font-size:12px; background:rgba(255,255,255,0.05)" onclick="openDrawer('${r.id}')">รายละเอียด</button>
+            <td>${item.time} น.</td>
+            <td><b style="color:#fd7d7e">${item.type}</b></td>
+            <td style="text-align:right">
+                <button class="btn-refresh" style="padding:5px 15px; cursor:pointer;" onclick="openDrawer('${item.id}', '${item.id.startsWith('C') ? 'Chat' : 'Post'}')">ตรวจสอบ →</button>
             </td>
         </tr>
-    `}).join('');
+    `).join('');
+    
+    document.getElementById('last-update').innerText = "Update: " + new Date().toLocaleTimeString();
 }
 
-function updateStatus(id, newStatus) {
-    const r = reports.find(x => x.id === id);
-    if(r) r.status = newStatus;
-    toast('✅', 'ดำเนินการสำเร็จ');
-    renderTable();
-    closeDrawer();
-}
+// เปิดดูรายละเอียด
+function openDrawer(id, source) {
+    const data = (source === 'Chat') ? CHAT_REPORTS : POST_REPORTS;
+    const item = data.find(x => x.id === id);
 
-function openDrawer(id) {
-    const r = reports.find(x => x.id === id);
-    if(!r) return;
-
-    const [sLabel, sClass] = STATUS_LABEL[r.status];
-
-    document.getElementById('d-body').innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px">
-            <div class="detail-field">
-                <div class="detail-label">Report ID</div>
-                <div class="id-badge">${r.id}</div>
-            </div>
-            <span class="badge ${sClass}">${sLabel}</span>
+    document.getElementById('drawer-content').innerHTML = `
+        <div class="info-box">
+            <small style="color:var(--red)">🚩 ผู้ถูกรายงาน (Reported User)</small>
+            <code style="color:var(--muted)">ID: ${item.reportedID}</code>
         </div>
-
-        <div style="background:rgba(255,255,255,0.02); padding:16px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:12px">
-                <div>
-                    <div class="detail-label">ผู้ถูกรายงาน (ID)</div>
-                    <div class="id-badge" style="color:var(--red)">${r.reportedId}</div>
-                </div>
-                <div>
-                    <div class="detail-label">ผู้รายงาน (ID)</div>
-                    <div class="id-badge">${r.reporterId}</div>
-                </div>
-            </div>
+        <div class="info-box">
+            <small style="color:var(--accent)">👤 ผู้แจ้งเหตุ (Reporter)</small>
+            <div>${item.reporterID}</div>
         </div>
-
-        <div style="display:flex; gap:10px; margin-bottom:20px">
-            <div style="flex:1">
-                <div class="detail-label">ช่องทาง</div>
-                <span class="badge ${r.feature === 'Chat' ? 'b-blue' : 'b-purple'}">${r.feature}</span>
-            </div>
-            <div style="flex:2">
-                <div class="detail-label">ประเภทปัญหา</div>
-                <span class="badge b-red">${r.type}</span>
-            </div>
+        <div class="info-box">
+            <small>📝 รายละเอียด (Source: ${source})</small>
+            <p style="font-size:14px; line-height:1.5;">${item.desc}</p>
         </div>
-
-        <div class="detail-field">
-            <div class="detail-label">รายละเอียดเหตุการณ์</div>
-            <div class="detail-val" style="background:var(--card); padding:16px; border-radius:10px; border:1px solid var(--border2)">
-                ${r.description}
-            </div>
-        </div>
-
-        <div style="margin-top:30px; display:flex; gap:10px">
-            <button class="btn" style="background:var(--green); color:#000; border:none; font-weight:700; flex:1" onclick="updateStatus('${r.id}','resolved')">ยืนยันจัดการ</button>
-            <button class="btn" style="flex:1" onclick="updateStatus('${r.id}','dismissed')">ยกเลิก</button>
+        <div style="margin-top:30px;">
+            <button class="btn-action btn-green" onclick="handleAction('${item.id}', 'resolved')">ยืนยันการจัดการ</button>
+            <button class="btn-action btn-outline" onclick="handleAction('${item.id}', 'dismissed')">ยกเลิกรายการนี้</button>
         </div>
     `;
-    document.getElementById('overlay').classList.add('open');
+    document.getElementById('drawer').style.display = 'flex';
 }
 
-function closeDrawer(e) { 
-    if(!e || e.target.id === 'overlay' || e.target.className === 'close-btn') {
-        document.getElementById('overlay').classList.remove('open'); 
-    }
+// ฟังก์ชันจัดการ (ยืนยัน/ยกเลิก)
+function handleAction(id, action) {
+    // ลบข้อมูลออกจาก List (จำลองการจัดการเสร็จ)
+    CHAT_REPORTS = CHAT_REPORTS.filter(x => x.id !== id);
+    POST_REPORTS = POST_REPORTS.filter(x => x.id !== id);
+
+    const msg = action === 'resolved' ? '✅ จัดการเรียบร้อยแล้ว' : '📁 ยกเลิกรายงานแล้ว';
+    showToast(msg);
+    closeDrawer();
+    updateTable();
 }
 
-function toast(icon, msg) {
-    const el = document.getElementById('toast');
-    el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 2000);
+function closeDrawer() { document.getElementById('drawer').style.display = 'none'; }
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-function fetchReports() {
-    renderTable();
-    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('th-TH');
-}
-
-fetchReports();
+// รันครั้งแรก
+updateTable();

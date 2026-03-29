@@ -2,76 +2,54 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HealJai — Admin Report Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>HealJai Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header class="topbar">
-        <div class="brand">
-            <div class="logo-wrapper">
-                <img src="../img/app_icon.png" alt="HealJai Logo" class="main-logo">
-            </div>
-            <div class="brand-name">Heal<span>Jai</span> Admin</div>
+    <aside class="sidebar">
+        <div class="logo-box">
+            <img src="../img/app_icon.png" class="main-logo" alt="Logo">
+            <h3>Heal<span>Jai</span> Admin</h3>
         </div>
-        <div class="topbar-right">
-            <div class="live-badge"><span class="live-dot"></span> Live</div>
-            <span id="last-updated">—</span>
-            <button class="btn" onclick="fetchReports()">↻ Refresh</button>
+        <nav>
+            <button onclick="switchPage('all')" id="btn-all" class="menu-btn active">📊 ทั้งหมด</button>
+            <button onclick="switchPage('Chat')" id="btn-Chat" class="menu-btn">💬 ห้องแชท (Chat)</button>
+            <button onclick="switchPage('Post')" id="btn-Post" class="menu-btn">📝 โพสต์ (Post)</button>
+        </nav>
+        <div class="footer">
+            <small id="last-update">Update: --:--</small>
         </div>
-    </header>
+    </aside>
 
-    <div class="wrap">
-        <div class="filters">
-            <div class="search-box">
-                <span style="color:var(--muted)">⌕</span>
-                <input type="text" id="q" placeholder="ค้นหา Report ID..." oninput="renderTable()">
-            </div>
-            <select id="f-feature" onchange="renderTable()">
-                <option value="">ทุกฟีเจอร์</option>
-                <option value="Chat">Chat</option>
-                <option value="Post">Post</option>
-            </select>
-            <select id="f-status" onchange="renderTable()">
-                <option value="">ทุกสถานะ</option>
-                <option value="pending">รอตรวจสอบ</option>
-                <option value="resolved">จัดการแล้ว</option>
-                <option value="dismissed">ยกเลิก</option>
-            </select>
-        </div>
-
-        <div class="table-card">
-            <div class="table-head">
-                <span class="table-title">คิวงานรอดำเนินการ</span>
-                <span class="count-badge" id="row-count">0 รายการ</span>
-            </div>
+    <main class="content">
+        <h2 id="title">รายงานทั้งหมด</h2>
+        <div class="card">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 150px;">วันที่ / เวลา</th>
-                        <th style="width: 120px;">ฟีเจอร์</th>
+                        <th>เวลา</th>
                         <th>ประเภทปัญหา</th>
                         <th style="text-align: right;">การจัดการ</th>
                     </tr>
                 </thead>
-                <tbody id="tbody"></tbody>
+                <tbody id="table-body"></tbody>
             </table>
         </div>
-    </div>
+    </main>
 
-    <div class="overlay" id="overlay" onclick="closeDrawer(event)">
-        <div class="drawer" onclick="event.stopPropagation()">
+    <div id="drawer" class="overlay" onclick="closeDrawer()">
+        <div class="drawer-box" onclick="event.stopPropagation()">
             <div class="drawer-head">
-                <div style="font-weight:700; font-size:16px">รายละเอียดการรายงาน</div>
-                <button class="close-btn" onclick="closeDrawer()">✕</button>
+                <h3>ตรวจสอบรายละเอียด</h3>
+                <button onclick="closeDrawer()">✕</button>
             </div>
-            <div class="drawer-body" id="d-body"></div>
+            <div id="drawer-content" class="drawer-body"></div>
         </div>
     </div>
 
-    <div id="toast"><span id="t-icon"></span><span id="t-msg"></span></div>
+    <div id="toast">แจ้งเตือนระบบ</div>
 
     <script src="script.js"></script>
 </body>
